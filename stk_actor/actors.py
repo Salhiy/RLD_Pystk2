@@ -27,11 +27,10 @@ class Actor(Agent):
         self.policy_net = policy_net
 
     def forward(self, t: int):
-        # Use the policy network to compute probabilities over actions
-        state = self.get(("state", t))  # Get the state at time t
-        logits = self.policy_net(state)  # Compute logits
-        probs = F.softmax(logits, dim=-1)  # Convert logits to probabilities
-        self.set(("probs", t), probs)  # Store probabilities for further use
+        state = self.get(("state", t))  
+        logits = self.policy_net(state)  
+        probs = F.softmax(logits, dim=-1)  
+        self.set(("probs", t), probs) 
 
 
 class ArgmaxActor(Agent):
@@ -42,20 +41,17 @@ class ArgmaxActor(Agent):
         self.policy_net = policy_net
 
     def forward(self, t: int):
-        # Compute the action by selecting the highest probability
-        state = self.get(("state", t))  # Get the state at time t
-        logits = self.policy_net(state)  # Compute logits
-        action = torch.argmax(logits, dim=-1)  # Select the action with max probability
-        self.set(("action", t), action)  # Store the action
+        state = self.get(("state", t)) 
+        logits = self.policy_net(state) 
+        action = torch.argmax(logits, dim=-1)  
+        self.set(("action", t), action)  
 
 
 class SamplingActor(Agent):
-    """Samples random actions"""
 
     def __init__(self, action_space: gym.Space):
         super().__init__()
         self.action_space = action_space
 
     def forward(self, t: int):
-        # Sample a random action from the action space
         self.set(("action", t), torch.LongTensor([self.action_space.sample()]))
