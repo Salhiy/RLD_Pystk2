@@ -3,7 +3,6 @@ from bbrl.agents import Agents, Agent
 import gymnasium as gym
 
 from .actors import SquashedGaussianActor, HistoryWrapper
-from .lean import tqc_config
 
 env_name = "supertuxkart/flattened-v0"
 
