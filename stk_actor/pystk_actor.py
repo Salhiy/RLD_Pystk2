@@ -27,8 +27,8 @@ def get_actor(
     }
 
     actor = SquashedGaussianActor(
-        obs_size, config.algorithm.architecture.actor_hidden_size, act_size, action_space
-        , 1, config.algorithm.projection_state_size, config.algorithm.projection_action_size
+        obs_size, 128, act_size, action_space
+        , 1, 128, 128
     )
 
     if state is None:
