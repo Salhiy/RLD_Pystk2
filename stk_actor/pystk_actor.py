@@ -2,34 +2,44 @@ from typing import List, Callable
 from bbrl.agents import Agents, Agent
 import gymnasium as gym
 
-# Imports our Actor class
-# IMPORTANT: note the relative import
-from .actors import Actor, MyWrapper, ArgmaxActor, SamplingActor
+from .actors import SquashedGaussianActor, HistoryWrapper
+from .lean import config
 
-#: The base environment name
-env_name = "supertuxkart/flattened_multidiscrete-v0"
+env_name = "supertuxkart/flattened-v0"
 
 #: Player name
-player_name = "Example"
+player_name = "TurboNebula"
+
 
 
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
-    actor = Actor(observation_space, action_space)
+    
+    obs_size = {
+        "continuous": observation_space["continuous"].shape[0],
+        "discrete": observation_space["discrete"].shape[0]
+    }
 
-    # Returns a dummy actor
+    act_size = {
+        "continuous": action_space["continuous"].shape[0],
+        "discrete":action_space["discrete"].shape[0]
+    }
+
+    actor = SquashedGaussianActor(
+        obs_size, config.algorithm.architecture.actor_hidden_size, act_size, action_space
+        , 1, config.algorithm.projection_state_size, config.algorithm.projection_action_size
+    )
+
     if state is None:
         return SamplingActor(action_space)
 
     actor.load_state_dict(state)
-    return Agents(actor, ArgmaxActor())
+    return actor
 
 
 def get_wrappers() -> List[Callable[[gym.Env], gym.Wrapper]]:
-    """Returns a list of additional wrappers to be applied to the base
-    environment"""
+
     return [
-        # Example of a custom wrapper
-        lambda env: MyWrapper(env, option="1")
+        lambda env: HistoryWrapper(env)
     ]
