@@ -19,7 +19,6 @@ import bbrl_gymnasium
 import numpy as np
 
 import torch as th
-import numpy as np
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -259,7 +258,7 @@ class TanhBijector:
         # Squash correction (from original SAC implementation)
         return th.log(1.0 - th.tanh(x) ** 2 + self.epsilon)
 
-class SquashedDiagGaussianDistribution_(DiagGaussianDistribution):
+class SquashedDiagGaussianDistribution(DiagGaussianDistribution):
     """
     Gaussian distribution with diagonal covariance matrix, followed by a squashing function (tanh) to ensure bounds.
 
