@@ -3,7 +3,7 @@ from bbrl.agents import Agents, Agent
 import gymnasium as gym
 
 from .actors import SquashedGaussianActor, HistoryWrapper
-from .lean import config
+from .lean import tqc_config
 
 env_name = "supertuxkart/flattened-v0"
 
@@ -11,7 +11,7 @@ env_name = "supertuxkart/flattened-v0"
 player_name = "TurboNebula"
 
 
-
+#tqc_actor
 def get_actor(
     state, observation_space: gym.spaces.Space, action_space: gym.spaces.Space
 ) -> Agent:
