@@ -17,6 +17,7 @@ import math
 import time
 import bbrl_gymnasium
 import numpy as np
+from bbrl.utils.distributions import SquashedDiagGaussianDistribution
 
 class HistoryWrapper(gym.Wrapper):
     def __init__(self, env, horizon=2):
