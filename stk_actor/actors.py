@@ -325,54 +325,63 @@ class SquashedDiagGaussianDistribution(DiagGaussianDistribution):
             action_list.append(action)
         return action_list
 
-class HistoryWrapper(gym.Wrapper):
+class HistoryObservationWrapper(gym.ObservationWrapper):
     def __init__(self, env, horizon=2):
         super().__init__(env)
         self.horizon = horizon  # Nombre d'observations à stocker
         self.frames = {"discrete": [], "continuous": []}  # Historique des observations
 
-        
+        # Récupération des espaces d'observation pour les parties "discrete" et "continuous"
         self.continuous_space = env.observation_space["continuous"]
         self.discrete_space = env.observation_space["discrete"]
 
+        # Redéfinition de l'espace d'observation pour intégrer l'historique
         self.observation_space = gym.spaces.Dict({
-            "discrete": gym.spaces.MultiDiscrete(np.tile(self.discrete_space.nvec, (horizon,))),
+            "discrete": gym.spaces.MultiDiscrete(
+                np.tile(self.discrete_space.nvec, (self.horizon,))
+            ),
             "continuous": gym.spaces.Box(
-                low=np.tile(self.continuous_space.low, (horizon,)),
-                high=np.tile(self.continuous_space.high, (horizon,)),
+                low=np.tile(self.continuous_space.low, (self.horizon,)),
+                high=np.tile(self.continuous_space.high, (self.horizon,)),
                 dtype=self.continuous_space.dtype
             )
         })
 
     def reset(self, seed=None, options=None):
-            obs, info = self.env.reset(seed=seed, options=options)  
-
-            self.frames = {
-                "discrete": [obs["discrete"]] * self.horizon,
-                "continuous": [obs["continuous"]] * self.horizon
-            }
-
-            return {
-                "discrete": torch.tensor(np.concatenate(self.frames["discrete"]), dtype=torch.long),
-                "continuous": torch.tensor(np.concatenate(self.frames["continuous"]), dtype=torch.float32)
-            }, info
-
+        # Appel au reset de l'environnement sous-jacent
+        observation, info = self.env.reset(seed=seed, options=options)
+        # Initialisation de l'historique avec la même observation répétée
+        self.frames = {
+            "discrete": [observation["discrete"]] * self.horizon,
+            "continuous": [observation["continuous"]] * self.horizon
+        }
+        return self.get_history(), info
 
     def step(self, action):
-        obs, reward, done, truncated, info = self.env.step(action)
 
-        self.frames["discrete"].insert(0, obs["discrete"])
-        self.frames["continuous"].insert(0, obs["continuous"])
+        observation, reward, done, truncated, info = self.env.step(action)
 
+        self.frames["discrete"].insert(0, observation["discrete"])
+        self.frames["continuous"].insert(0, observation["continuous"])
+
+        # On limite la longueur de l'historique à 'horizon'
         if len(self.frames["discrete"]) > self.horizon:
             self.frames["discrete"].pop()
         if len(self.frames["continuous"]) > self.horizon:
             self.frames["continuous"].pop()
 
+        return self.get_history(), reward, done, truncated, info
+
+    def observation(self, observation):
+        
+        return self.get_history()
+
+    def get_history(self):
+        # Concatène l'historique et le convertit en tenseurs PyTorch
         return {
             "discrete": torch.tensor(np.concatenate(self.frames["discrete"]), dtype=torch.long),
             "continuous": torch.tensor(np.concatenate(self.frames["continuous"]), dtype=torch.float32)
-        }, reward, done, truncated, info
+        }
 
 
 class BackbonePolicyLstm(nn.Module):
